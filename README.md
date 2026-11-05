@@ -1,54 +1,72 @@
-# jubbiofreebot
+# Atom Jubbio Template
 
-📦 CODESPACES İLE KURULUM (bilgisayara hiçbir şey kurmadan, tarayıcıdan)
--	1.	Repo'nun GitHub sayfasına git.
--	2.	Sağ üstteki yeşil "Code" butonuna bas.
--	3.	Açılan menüden "Codespaces" sekmesine geç.
--	4.	"Create codespace on main" yazan butona bas.
--	5.	Birkaç saniye-dakika bekle, tarayıcıda bir kod editörü açılacak (Visual Studio Code'un tarayıcı versiyonu gibi).
--	6.	Alt tarafta bir "Terminal" penceresi göreceksin (yoksa üstten Terminal > New Terminal).
--	7.	Terminale şunu yaz ve Enter'a bas:
-```bash
-npm install
-```
-Bu, botun çalışması için gereken dosyaları indirir, biraz sürebilir, bitene kadar bekle.
--	8.	Sol taraftaki dosya listesinde .env.example dosyasına sağ tıkla, "Rename" (yeniden adlandır) de ve adını .env yap (yani sondaki ".example" kısmını sil).
--	9.	Açtığın .env dosyasının içine, Jubbio bot tokenini yapıştır. İçi şöyle görünmeli:
-```bash
-BOT_TOKEN=buraya_kendi_tokenini_yapıştır
-```
--	10.	Kaydet (Ctrl+S / Cmd+S).
--	11.	Terminale şunu yaz ve Enter'a bas:
-```bash
-node index.js
-```
--	12.	Terminalde "Bot hazır" yazısını görürsen bot çalışıyor demektir.
--	13.	Discord/Jubbio sunucunda ap ping yaz, bot sana cevap verecek.
+**Ato TARAFINDAN yapılmıştır**
 
-💻 VISUAL STUDIO CODE İLE KURULUM (kendi bilgisayarında)
+Sade, herkesin kolayca komut ekleyebileceği bir Jubbio botu iskeleti. Şu an tek bir örnek komutu var: `ap ping`.
 
-—	1.	Bilgisayarında Node.js kurulu değilse, nodejs.org adresine git, "LTS" yazan sürümü indir ve kur (hep "İleri/Next" diyerek kurulur).
--	2.	Visual Studio Code kurulu değilse, code.visualstudio.com adresinden indir ve kur.
--	3.	Botun dosyalarını (zip) bilgisayarına indir, sağ tıklayıp "Tümünü Çıkart / Extract All" ile bir klasöre çıkart.
--	4.	Visual Studio Code'u aç.
--	5.	Üst menüden File > Open Folder (Dosya > Klasör Aç) de, az önce çıkarttığın klasörü seç.
--	6.	Üst menüden Terminal > New Terminal (Terminal > Yeni Terminal) de, alt tarafta bir yazı yazma ekranı açılacak.
--	7.	O ekrana şunu yaz, Enter'a bas:
-```bash
-npm install
-```
+## Kurulum
 
-Bitmesini bekle.
--	8.	Sol taraftaki dosya listesinde .env.example dosyasına sağ tıkla, "Rename" de, adını .env yap.
--	9.	O dosyayı aç, içine Jubbio bot tokenini yapıştır:
-```bash
-BOT_TOKEN=buraya_kendi_tokenini_yapıştır
+1. `npm install`
+2. `.env.example` dosyasını `.env` olarak kopyala, içine kendi bot tokenini yaz:
+   ```
+   BOT_TOKEN=senin_tokenin
+   ```
+3. Başlat:
+   ```
+   npm start
+   ```
+   ya da
+   ```
+   node index.js
+   ```
+4. "Bot hazır" yazısını görünce sunucuda `ap ping` yaz, botun cevap verdiğini göreceksin.
+
+## Yeni komut nasıl eklenir?
+
+`commands/` klasörüne yeni bir `.js` dosyası at — bot açılırken o klasördeki **her** dosyayı otomatik yükler, başka hiçbir yeri değiştirmene gerek yok.
+
+Dosyanın şekli hep aynı:
+
+```js
+export default [
+  {
+    name: 'selam',
+    aliases: ['hi', 'merhaba'],
+    async run(ctx) {
+      await ctx.reply(`Selam <@${ctx.author.id}>!`);
+    },
+  },
+];
 ```
 
--	10.	Kaydet (Ctrl+S).
--	11.	Terminale şunu yaz, Enter'a bas:
+Bir dosyada birden fazla komut da olabilir — `export default [...]` dizisine istediğin kadar obje ekleyebilirsin.
 
-node index.js
+`ctx` (komutun içinde kullanabileceğin bilgiler):
 
--	12.	"Bot hazır" yazısını görürsen çalışıyor demektir.
--	13.	Discord/Jubbio sunucunda ap ping yaz, test et.
+| Alan | Ne işe yarar |
+|---|---|
+| `ctx.g` | Komutun yazıldığı sunucunun ID'si |
+| `ctx.c` | Komutun yazıldığı kanalın ID'si |
+| `ctx.author` | Komutu yazan kullanıcı (`ctx.author.id`, `ctx.author.username`) |
+| `ctx.args` | Komuttan sonraki kelimeler, dizi olarak (`ap selam Ali` → `['Ali']`) |
+| `ctx.content` | Mesajın tam metni |
+| `ctx.reply(p)` | Komutu yazan mesaja **yanıt olarak** gönderir — `p` düz metin ya da `{ embeds: [...] }` gibi bir obje olabilir |
+| `ctx.send(p)` | Aynı kanala normal (yanıtsız) mesaj gönderir |
+
+`lib/util.js` içinde `userId()`, `roleId()`, `chanId()` (mention/ID ayıklama) ve `embed()` (embed oluşturma) gibi hazır yardımcılar da var, istersen komutlarında kullanabilirsin:
+
+```js
+import { userId, embed } from '../lib/util.js';
+
+export default [{
+  name: 'bilgi',
+  async run(ctx) {
+    const hedef = userId(ctx.args[0]) || ctx.author.id;
+    await ctx.reply({ embeds: [embed({ title: 'Kullanıcı', description: `<@${hedef}>` })] });
+  },
+}];
+```
+
+## Komut önekini değiştirmek
+
+`lib/config.js` içindeki `PREFIX` değerini değiştir (varsayılan: `'ap '`).
